@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"log"
 	"net/http"
 	"net/url"
 
@@ -40,11 +39,6 @@ func (s *Server) proxyRPC(c echo.Context) error {
 	// 	"method": "getinfo",
 	// 	"params": []
 	// }
-	type jsonRPCRequest struct {
-		Method string          `json:"method"`
-		ID     json.RawMessage `json:"id"`
-		Params json.RawMessage `json:"params"`
-	}
 
 	var jsonRPCReq jsonRPCRequest
 
@@ -54,12 +48,11 @@ func (s *Server) proxyRPC(c echo.Context) error {
 	}
 
 	methodName := jsonRPCReq.Method
-	log.Println("method", methodName)
 
 	method, found := rpcMethods[methodName]
 
 	if !found {
-		c.JSON(http.StatusNotFound, &jsonRPCError{
+		return c.JSON(http.StatusNotFound, &jsonRPCError{
 			Code:    0,
 			Message: fmt.Sprintf("RPC method not supported: %s", methodName),
 		})
