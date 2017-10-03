@@ -16,6 +16,8 @@ type Server struct {
 	Options ServerOption
 
 	authStore *authorizationStore
+
+	authApp *echo.Echo
 }
 
 type ServerOption struct {
@@ -28,10 +30,21 @@ type ServerOption struct {
 func NewServer(opts ServerOption) *Server {
 	authStore := newAuthorizationStore()
 
-	return &Server{
+	s := &Server{
 		Options:   opts,
 		authStore: authStore,
 	}
+
+	e := echo.New()
+
+	e.GET("/authorizations", s.listAuthorizations)
+	e.GET("/authorizations/:id", s.getAuthorization)
+	e.POST("/authorizations/:id/accept", s.acceptAuthorization)
+	e.POST("/authorizations/:id/deny", s.acceptAuthorization)
+
+	s.authApp = e
+
+	return s
 }
 
 func (s *Server) Start() error {
@@ -45,18 +58,45 @@ func (s *Server) Start() error {
 }
 
 func (s *Server) StartAuthService() error {
-	e := echo.New()
-
-	e.GET("/authorizations", s.listAuthorizations)
-
 	addr := fmt.Sprintf(":%d", s.Options.AuthPort)
 	fmt.Sprintln("Authorization service listening", addr)
-	return e.Start(addr)
+	return s.authApp.Start(addr)
 }
 
 func (s *Server) listAuthorizations(c echo.Context) error {
 	auths := s.authStore.pendingAuthorizations()
 	return c.JSON(http.StatusOK, auths)
+}
+
+func (s *Server) getAuthorization(c echo.Context) error {
+	id := c.Param("id")
+	auth, found := s.authStore.get(id)
+
+	if !found {
+		return echo.NewHTTPError(http.StatusNotFound)
+	}
+
+	return c.JSON(http.StatusOK, auth)
+}
+
+func (s *Server) acceptAuthorization(c echo.Context) error {
+	id := c.Param("id")
+	err := s.authStore.accept(id)
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, err)
+	}
+
+	return c.NoContent(http.StatusOK)
+}
+
+func (s *Server) denyAuthorization(c echo.Context) error {
+	id := c.Param("id")
+	err := s.authStore.deny(id)
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, err)
+	}
+
+	return c.NoContent(http.StatusOK)
 }
 
 func (s *Server) proxyRPC(c echo.Context) error {

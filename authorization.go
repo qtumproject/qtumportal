@@ -14,10 +14,8 @@ import (
 type authStore struct {
 }
 
-//go:generate stringer -type=AuthorizationState
-
 // AuthorizationState is the state of an Authorization
-type AuthorizationState int
+type AuthorizationState string
 
 // s AuthorizationState json.Marshaler
 
@@ -25,16 +23,16 @@ type AuthorizationState int
 // MarshalJSON() ([]byte, error)
 
 const (
-	AuthorizationPending AuthorizationState = iota
+	AuthorizationPending AuthorizationState = "pending"
 	// transition => {accepted, denied}
 
-	AuthorizationAccepted
+	AuthorizationAccepted AuthorizationState = "accepted"
 	// transition => { consumed }
 
-	AuthorizationDenied
+	AuthorizationDenied AuthorizationState = "denied"
 	// transition => {}
 
-	AuthorizationConsumed
+	AuthorizationConsumed AuthorizationState = "consumed"
 	// transition => {}
 
 	// AuthorizationTimeout
@@ -57,6 +55,14 @@ func newAuthorizationStore() *authorizationStore {
 	return &authorizationStore{
 		authorizaitons: make(map[string]*Authorization),
 	}
+}
+
+func (s *authorizationStore) get(id string) (*Authorization, bool) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	auth, found := s.authorizaitons[id]
+	return auth, found
 }
 
 func (s *authorizationStore) pendingAuthorizations() []*Authorization {
