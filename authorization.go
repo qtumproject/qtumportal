@@ -24,8 +24,17 @@ type AuthorizationState int
 
 const (
 	AuthorizationPending AuthorizationState = iota
+	// transition => {accepted, denied}
+
 	AuthorizationAccepted
-	// AuthorizationDenied
+	// transition => { consumed }
+
+	AuthorizationDenied
+	// transition => {}
+
+	AuthorizationConsumed
+	// transition => {}
+
 	// AuthorizationTimeout
 )
 
@@ -93,7 +102,7 @@ func (s *authorizationStore) verify(id string, req *jsonRPCRequest) bool {
 		return false
 	}
 
-	delete(s.authorizaitons, id)
+	auth.State = AuthorizationConsumed
 
 	return true
 }
@@ -116,6 +125,10 @@ func (s *authorizationStore) accept(id string) error {
 		return errors.New("Authorization not found")
 	}
 
+	if auth.State != AuthorizationPending {
+		return errors.New("Authorization not pending")
+	}
+
 	auth.State = AuthorizationAccepted
 
 	return nil
@@ -125,13 +138,17 @@ func (s *authorizationStore) deny(id string) error {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
-	_, found := s.authorizaitons[id]
+	auth, found := s.authorizaitons[id]
 
 	if !found {
 		return errors.New("Authorization not found")
 	}
 
-	delete(s.authorizaitons, id)
+	if auth.State != AuthorizationPending {
+		return errors.New("Authorization not pending")
+	}
+
+	auth.State = AuthorizationDenied
 
 	return nil
 }
