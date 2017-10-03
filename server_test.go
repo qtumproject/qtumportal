@@ -32,35 +32,38 @@ func init() {
 	testRPCURL = qtumRPCURL
 }
 
-func testProxy(jsonreq *jsonRPCRequest) (*http.Response, error) {
+func testServer() *Server {
+	opts := ServerOption{
+		// Port:        9999,
+		QtumdRPCURL: testRPCURL,
+	}
+
+	s := NewServer(opts)
+
+	return s
+}
+
+func testReq(handler func(c echo.Context) error, req *http.Request) (*http.Response, error) {
+	e := echo.New()
+	rec := httptest.NewRecorder()
+	c := e.NewContext(req, rec)
+
+	err := handler(c)
+
+	return rec.Result(), err
+}
+
+func testProxy(s *Server, jsonreq *jsonRPCRequest) (*http.Response, error) {
 	jsonreqBodyBytes, err := json.Marshal(jsonreq)
 	if err != nil {
 		return nil, err
 	}
 
 	jsonreqBody := bytes.NewReader(jsonreqBodyBytes)
-
 	req := httptest.NewRequest("POST", "/qtumrpc", jsonreqBody)
 	req.Header.Set("Content-Type", "application/json")
-	rec := httptest.NewRecorder()
 
-	e := echo.New()
-	c := e.NewContext(req, rec)
-
-	opts := ServerOption{
-		// Port:        9999,
-		QtumdRPCURL: testRPCURL,
-	}
-	s := &Server{
-		Options: opts,
-	}
-
-	err = s.proxyRPC(c)
-	if err != nil {
-		return nil, err
-	}
-
-	res := rec.Result()
+	res, err := testReq(s.proxyRPC, req)
 
 	return res, nil
 }
@@ -68,11 +71,13 @@ func testProxy(jsonreq *jsonRPCRequest) (*http.Response, error) {
 func TestProxyMethodNotFound(t *testing.T) {
 	is := assert.New(t)
 
+	s := testServer()
+
 	jsonreq := &jsonRPCRequest{
 		Method: "no-such-method",
 	}
 
-	res, err := testProxy(jsonreq)
+	res, err := testProxy(s, jsonreq)
 	is.NoError(err)
 	is.Equal(404, res.StatusCode)
 }
@@ -80,23 +85,61 @@ func TestProxyMethodNotFound(t *testing.T) {
 func TestProxyMethodFound(t *testing.T) {
 	is := assert.New(t)
 
+	s := testServer()
+
 	jsonreq := &jsonRPCRequest{
 		Method: "getinfo",
 	}
 
-	res, err := testProxy(jsonreq)
+	res, err := testProxy(s, jsonreq)
 	is.NoError(err)
 	is.Equal(200, res.StatusCode)
 }
 
 func TestProxyUserAuthorization(t *testing.T) {
 	is := assert.New(t)
+	s := testServer()
 
-	jsonreq := &jsonRPCRequest{
-		Method: "getnewaddress",
+	hasNumberOfPendingAuths := func(i int) {
+		var auths []*Authorization
+		listAuthsReq := httptest.NewRequest("GET", "/authorizations", nil)
+		listAuthsRes, err := testReq(s.listAuthorizations, listAuthsReq)
+		is.NoError(err)
+		defer listAuthsRes.Body.Close()
+		is.Equal(http.StatusOK, listAuthsRes.StatusCode)
+
+		dec := json.NewDecoder(listAuthsRes.Body)
+		err = dec.Decode(&auths)
+		is.NoError(err)
+		is.Equal(i, len(auths))
 	}
 
-	res, err := testProxy(jsonreq)
-	is.NoError(err)
-	is.Equal(402, res.StatusCode)
+	makeAuthCall := func() *Authorization {
+		jsonreq := &jsonRPCRequest{
+			Method: "getnewaddress",
+		}
+
+		res, err := testProxy(s, jsonreq)
+		is.NoError(err)
+		is.Equal(402, res.StatusCode)
+		defer res.Body.Close()
+
+		var auth Authorization
+		dec := json.NewDecoder(res.Body)
+		err = dec.Decode(&auth)
+		is.NoError(err)
+
+		return &auth
+	}
+
+	hasNumberOfPendingAuths(0)
+
+	auth1 := makeAuthCall()
+	hasNumberOfPendingAuths(1)
+
+	auth2 := makeAuthCall()
+	hasNumberOfPendingAuths(2)
+
+	is.NotEqual(auth1.ID, auth2.ID)
+
 }

@@ -4,7 +4,9 @@ import (
 	"bytes"
 	"crypto/rand"
 	"encoding/base64"
+	"sort"
 	"sync"
+	"time"
 
 	"github.com/pkg/errors"
 )
@@ -39,9 +41,10 @@ const (
 )
 
 type Authorization struct {
-	ID      string
-	State   AuthorizationState
-	Request *jsonRPCRequest
+	ID        string
+	State     AuthorizationState
+	Request   *jsonRPCRequest
+	CreatedAt time.Time
 }
 
 type authorizationStore struct {
@@ -54,6 +57,25 @@ func newAuthorizationStore() *authorizationStore {
 	return &authorizationStore{
 		authorizaitons: make(map[string]*Authorization),
 	}
+}
+
+func (s *authorizationStore) pendingAuthorizations() []*Authorization {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	var auths []*Authorization
+
+	for _, auth := range s.authorizaitons {
+		if auth.State == AuthorizationPending {
+			auths = append(auths, auth)
+		}
+	}
+
+	sort.Slice(auths, func(i, j int) bool {
+		return auths[i].CreatedAt.After(auths[j].CreatedAt)
+	})
+
+	return auths
 }
 
 func (s *authorizationStore) create(req *jsonRPCRequest) (*Authorization, error) {

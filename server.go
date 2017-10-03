@@ -14,12 +14,24 @@ import (
 
 type Server struct {
 	Options ServerOption
+
+	authStore *authorizationStore
 }
 
 type ServerOption struct {
 	Port          int
+	AuthPort      int
 	StaticBaseDir string
 	QtumdRPCURL   *url.URL
+}
+
+func NewServer(opts ServerOption) *Server {
+	authStore := newAuthorizationStore()
+
+	return &Server{
+		Options:   opts,
+		authStore: authStore,
+	}
 }
 
 func (s *Server) Start() error {
@@ -30,6 +42,21 @@ func (s *Server) Start() error {
 	addr := fmt.Sprintf(":%d", s.Options.Port)
 	fmt.Sprintln("Server listening", addr)
 	return e.Start(addr)
+}
+
+func (s *Server) StartAuthService() error {
+	e := echo.New()
+
+	e.GET("/authorizations", s.listAuthorizations)
+
+	addr := fmt.Sprintf(":%d", s.Options.AuthPort)
+	fmt.Sprintln("Authorization service listening", addr)
+	return e.Start(addr)
+}
+
+func (s *Server) listAuthorizations(c echo.Context) error {
+	auths := s.authStore.pendingAuthorizations()
+	return c.JSON(http.StatusOK, auths)
 }
 
 func (s *Server) proxyRPC(c echo.Context) error {
@@ -59,7 +86,12 @@ func (s *Server) proxyRPC(c echo.Context) error {
 	}
 
 	if !method.NoAuth {
-		return c.JSON(http.StatusPaymentRequired, "auth required")
+		auth, err := s.authStore.create(&jsonRPCReq)
+		if err != nil {
+			return err
+		}
+
+		return c.JSON(http.StatusPaymentRequired, auth)
 	}
 
 	rpcURL := s.Options.QtumdRPCURL
