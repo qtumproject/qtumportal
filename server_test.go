@@ -88,3 +88,15 @@ func TestProxyMethodFound(t *testing.T) {
 	is.NoError(err)
 	is.Equal(200, res.StatusCode)
 }
+
+func TestProxyUserAuthorization(t *testing.T) {
+	is := assert.New(t)
+
+	jsonreq := &jsonRPCRequest{
+		Method: "getnewaddress",
+	}
+
+	res, err := testProxy(jsonreq)
+	is.NoError(err)
+	is.Equal(402, res.StatusCode)
+}

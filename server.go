@@ -59,7 +59,7 @@ func (s *Server) proxyRPC(c echo.Context) error {
 	}
 
 	if !method.NoAuth {
-		return c.JSON(200, "auth required")
+		return c.JSON(http.StatusPaymentRequired, "auth required")
 	}
 
 	rpcURL := s.Options.QtumdRPCURL
