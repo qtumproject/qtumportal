@@ -5,8 +5,12 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
+	"mime"
 	"net/http"
 	"net/url"
+	"path"
+
+	"github.com/hayeah/qtum-portal/ui"
 
 	"github.com/pkg/errors"
 
@@ -48,7 +52,28 @@ func NewServer(opts ServerOption) *Server {
 	e.Logger.SetOutput(ioutil.Discard)
 	e.HideBanner = true
 	s.authApp = e
-	e.Use(middleware.Static("/ui/build"))
+	e.Use(middleware.Static("ui/build"))
+	e.Use(func(next echo.HandlerFunc) echo.HandlerFunc {
+		return func(c echo.Context) error {
+			p := c.Request().URL.Path
+
+			if p[len(p)-1] == '/' {
+				p += "index.html"
+			}
+
+			data, err := ui.Asset(p)
+			if err == nil {
+				ext := path.Ext(p)
+				contentType := mime.TypeByExtension(ext)
+				if contentType == "" {
+					contentType = http.DetectContentType(data)
+				}
+				return c.Blob(http.StatusOK, contentType, data)
+			}
+
+			return next(c)
+		}
+	})
 	e.GET("/authorizations", s.listAuthorizations)
 	e.GET("/authorizations/:id", s.getAuthorization)
 	e.POST("/authorizations/:id/accept", s.acceptAuthorization)
