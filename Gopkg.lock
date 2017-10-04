@@ -8,14 +8,20 @@
   version = "v1.1.0"
 
 [[projects]]
-  name = "github.com/labstack/echo"
+  name = "github.com/dgrijalva/jwt-go"
   packages = ["."]
+  revision = "d2709f9f1f31ebcda9651b03077758c1f3a0018c"
+  version = "v3.0.0"
+
+[[projects]]
+  name = "github.com/labstack/echo"
+  packages = [".","middleware"]
   revision = "cec7629194fe4bf83b0c72d9a02d340c7a1468ac"
   version = "3.2.3"
 
 [[projects]]
   name = "github.com/labstack/gommon"
-  packages = ["color","log"]
+  packages = ["bytes","color","log","random"]
   revision = "57409ada9da0f2afad6664c49502f8c50fbd8476"
   version = "0.2.3"
 
@@ -44,6 +50,12 @@
   version = "v1.0.0"
 
 [[projects]]
+  name = "github.com/sirupsen/logrus"
+  packages = ["."]
+  revision = "f006c2ac4710855cf0f916dd6b77acf6b048dc6e"
+  version = "v1.0.3"
+
+[[projects]]
   name = "github.com/stretchr/testify"
   packages = ["assert"]
   revision = "69483b4bd14f5845b5a1e55bca19e954e827f1d0"
@@ -64,18 +76,18 @@
 [[projects]]
   branch = "master"
   name = "golang.org/x/crypto"
-  packages = ["acme","acme/autocert"]
+  packages = ["acme","acme/autocert","ssh/terminal"]
   revision = "9419663f5a44be8b34ca85f08abc5fe1be11f8a3"
 
 [[projects]]
   branch = "master"
   name = "golang.org/x/sys"
-  packages = ["unix"]
+  packages = ["unix","windows"]
   revision = "314a259e304ff91bd6985da2a7149bbf91237993"
 
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "4599e03d5a7a90744162aeffbc4ccfdf4bf8db3e27f75dae04cfd1f6cfad4d5a"
+  inputs-digest = "2802b63e032649a479b4d6cf717925cd877c0f181f32fc307aa39d0b9af145de"
   solver-name = "gps-cdcl"
   solver-version = 1

@@ -4,12 +4,14 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"io/ioutil"
 	"net/http"
 	"net/url"
 
 	"github.com/pkg/errors"
 
 	"github.com/labstack/echo"
+	"github.com/labstack/echo/middleware"
 )
 
 type Server struct {
@@ -37,11 +39,16 @@ func NewServer(opts ServerOption) *Server {
 	}
 
 	e := echo.New()
+	e.Logger.SetOutput(ioutil.Discard)
+	e.HideBanner = true
 	s.proxyApp = e
 	e.POST("/qtumd", s.proxyRPC)
 
 	e = echo.New()
+	e.Logger.SetOutput(ioutil.Discard)
+	e.HideBanner = true
 	s.authApp = e
+	e.Use(middleware.Static("/ui/build"))
 	e.GET("/authorizations", s.listAuthorizations)
 	e.GET("/authorizations/:id", s.getAuthorization)
 	e.POST("/authorizations/:id/accept", s.acceptAuthorization)
@@ -51,14 +58,27 @@ func NewServer(opts ServerOption) *Server {
 }
 
 func (s *Server) Start() error {
+	errC := make(chan error)
+	go func() {
+		errC <- s.startProxyService()
+	}()
+
+	go func() {
+		errC <- s.startAuthService()
+	}()
+
+	return <-errC
+}
+
+func (s *Server) startProxyService() error {
 	addr := fmt.Sprintf(":%d", s.Options.Port)
-	fmt.Sprintln("Server listening", addr)
+	log.Println("RPC service listening", addr)
 	return s.proxyApp.Start(addr)
 }
 
-func (s *Server) StartAuthService() error {
+func (s *Server) startAuthService() error {
 	addr := fmt.Sprintf(":%d", s.Options.AuthPort)
-	fmt.Sprintln("Authorization service listening", addr)
+	log.Println("Auth service listening", addr)
 	return s.authApp.Start(addr)
 }
 

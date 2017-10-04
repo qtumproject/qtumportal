@@ -12,12 +12,11 @@ func main() {
 
 	opts := portal.ServerOption{
 		Port:        9999,
+		AuthPort:    9898,
 		QtumdRPCURL: qtumRPCURL,
 	}
 
-	s := portal.Server{
-		Options: opts,
-	}
+	s := portal.NewServer(opts)
 
 	err = s.Start()
 	if err != nil {
