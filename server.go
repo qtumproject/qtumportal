@@ -15,7 +15,6 @@ import (
 	"github.com/pkg/errors"
 
 	"github.com/labstack/echo"
-	"github.com/labstack/echo/middleware"
 )
 
 type Server struct {
@@ -52,7 +51,7 @@ func NewServer(opts ServerOption) *Server {
 	e.Logger.SetOutput(ioutil.Discard)
 	e.HideBanner = true
 	s.authApp = e
-	e.Use(middleware.Static("ui/build"))
+	// e.Use(middleware.Static("ui/build"))
 	e.Use(func(next echo.HandlerFunc) echo.HandlerFunc {
 		return func(c echo.Context) error {
 			p := c.Request().URL.Path
@@ -61,7 +60,9 @@ func NewServer(opts ServerOption) *Server {
 				p += "index.html"
 			}
 
-			data, err := ui.Asset(p)
+			// strip off leading /
+			assetName := p[1:]
+			data, err := ui.Asset(assetName)
 			if err == nil {
 				ext := path.Ext(p)
 				contentType := mime.TypeByExtension(ext)
