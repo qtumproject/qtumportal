@@ -17,7 +17,8 @@ type Server struct {
 
 	authStore *authorizationStore
 
-	authApp *echo.Echo
+	authApp  *echo.Echo
+	proxyApp *echo.Echo
 }
 
 type ServerOption struct {
@@ -36,25 +37,23 @@ func NewServer(opts ServerOption) *Server {
 	}
 
 	e := echo.New()
+	s.proxyApp = e
+	e.POST("/qtumd", s.proxyRPC)
 
+	e = echo.New()
+	s.authApp = e
 	e.GET("/authorizations", s.listAuthorizations)
 	e.GET("/authorizations/:id", s.getAuthorization)
 	e.POST("/authorizations/:id/accept", s.acceptAuthorization)
 	e.POST("/authorizations/:id/deny", s.acceptAuthorization)
 
-	s.authApp = e
-
 	return s
 }
 
 func (s *Server) Start() error {
-	e := echo.New()
-
-	e.POST("/qtumd", s.proxyRPC)
-
 	addr := fmt.Sprintf(":%d", s.Options.Port)
 	fmt.Sprintln("Server listening", addr)
-	return e.Start(addr)
+	return s.proxyApp.Start(addr)
 }
 
 func (s *Server) StartAuthService() error {
@@ -125,18 +124,36 @@ func (s *Server) proxyRPC(c echo.Context) error {
 		})
 	}
 
-	if !method.NoAuth {
-		auth, err := s.authStore.create(&jsonRPCReq)
+	if method.NoAuth {
+		return s.doProxyRPCCall(c, &jsonRPCReq)
+	}
+
+	return s.doRPCCallAuth(c, &jsonRPCReq)
+}
+
+func (s *Server) doRPCCallAuth(c echo.Context, jsonRPCReq *jsonRPCRequest) error {
+	// If no auth token is provided, create authorization object and return 402
+	if jsonRPCReq.Auth == "" {
+		auth, err := s.authStore.create(jsonRPCReq)
 		if err != nil {
-			return err
+			return errors.Wrap(err, "auth")
 		}
 
 		return c.JSON(http.StatusPaymentRequired, auth)
 	}
 
+	// If auth token is provided, verify then proxy
+	if s.authStore.verify(jsonRPCReq.Auth, jsonRPCReq) {
+		return s.doProxyRPCCall(c, jsonRPCReq)
+	}
+
+	return echo.NewHTTPError(http.StatusForbidden, "Cannot verify RPC request")
+}
+
+func (s *Server) doProxyRPCCall(c echo.Context, jsonRPCReq *jsonRPCRequest) error {
 	rpcURL := s.Options.QtumdRPCURL
 
-	rpcBodyBytes, err := json.Marshal(&jsonRPCReq)
+	rpcBodyBytes, err := json.Marshal(jsonRPCReq)
 	if err != nil {
 		return errors.Wrap(err, "proxy rpc")
 	}

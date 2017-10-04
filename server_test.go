@@ -171,4 +171,26 @@ func TestProxyUserAuthorization(t *testing.T) {
 	auth1 = getAuth(auth1.ID)
 	is.Equal(AuthorizationAccepted, auth1.State)
 
+	// Re-execute an authorization
+	// jsonreq := &jsonRPCRequest{
+	// 	Method: "getnewaddress",
+	// }
+	req = httptest.NewRequest("POST", "/qtumd", bytes.NewReader([]byte(
+		fmt.Sprintf(`{"method": "getnewaddress", "auth": "%s", "params": null}`, auth1.ID),
+	)))
+	req.Header.Set("Content-Type", "application/json")
+	rec = httptest.NewRecorder()
+	s.proxyApp.ServeHTTP(rec, req)
+	res = rec.Result()
+	is.Equal(http.StatusOK, res.StatusCode)
+
+	// Reusing auth token should return 403
+	req = httptest.NewRequest("POST", "/qtumd", bytes.NewReader([]byte(
+		fmt.Sprintf(`{"method": "getnewaddress", "auth": "%s", "params": null}`, auth1.ID),
+	)))
+	req.Header.Set("Content-Type", "application/json")
+	rec = httptest.NewRecorder()
+	s.proxyApp.ServeHTTP(rec, req)
+	res = rec.Result()
+	is.Equal(http.StatusForbidden, res.StatusCode)
 }
