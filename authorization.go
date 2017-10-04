@@ -39,10 +39,10 @@ const (
 )
 
 type Authorization struct {
-	ID        string
-	State     AuthorizationState
-	Request   *jsonRPCRequest
-	CreatedAt time.Time
+	ID        string             `json:"id"`
+	State     AuthorizationState `json:"state"`
+	Request   *jsonRPCRequest    `json:"request"`
+	CreatedAt time.Time          `json:"createdAt"`
 }
 
 type authorizationStore struct {
@@ -95,9 +95,10 @@ func (s *authorizationStore) create(req *jsonRPCRequest) (*Authorization, error)
 	id := base64.RawURLEncoding.EncodeToString(buf[:])
 
 	auth := &Authorization{
-		ID:      id,
-		State:   AuthorizationPending,
-		Request: req,
+		ID:        id,
+		State:     AuthorizationPending,
+		Request:   req,
+		CreatedAt: time.Now(),
 	}
 
 	s.mu.Lock()

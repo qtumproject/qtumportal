@@ -10,6 +10,8 @@ import (
 	"net/url"
 	"path"
 
+	"github.com/labstack/echo/middleware"
+
 	"github.com/hayeah/qtum-portal/ui"
 
 	"github.com/pkg/errors"
@@ -31,6 +33,7 @@ type ServerOption struct {
 	AuthPort      int
 	StaticBaseDir string
 	QtumdRPCURL   *url.URL
+	DebugMode     bool
 }
 
 func NewServer(opts ServerOption) *Server {
@@ -51,6 +54,10 @@ func NewServer(opts ServerOption) *Server {
 	e.Logger.SetOutput(ioutil.Discard)
 	e.HideBanner = true
 	s.authApp = e
+
+	if opts.DebugMode {
+		e.Use(middleware.CORS())
+	}
 	// e.Use(middleware.Static("ui/build"))
 	e.Use(func(next echo.HandlerFunc) echo.HandlerFunc {
 		return func(c echo.Context) error {
