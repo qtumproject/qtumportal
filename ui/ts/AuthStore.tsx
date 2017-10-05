@@ -3,21 +3,43 @@ import { AuthAPI } from "./AuthAPI"
 import { IAuthorization } from "./types"
 
 export class AuthStore {
-  @observable public auths: IAuthorization[] = []
-  @observable public counter: number = 0
+  @observable public _auths: Map<string, IAuthorization> = new Map()
 
   constructor(private _api: AuthAPI) {
-    setInterval(() => {
-      this.counter++
-    }, 1000)
   }
 
   @computed get count(): number {
     return this.auths.length
   }
 
+  @computed get auths(): IAuthorization[] {
+    const auths: IAuthorization[] = []
+    for (const auth of this._auths.values())  {
+      auths.push(auth)
+    }
+
+    return auths
+  }
+
   public async loadAuthorizations() {
     const auths = await this._api.list()
-    this.auths = auths
+    auths.forEach((auth) => {
+      this._auths.set(auth.id, auth)
+    })
+
+    /* Babel error */
+    // for (const auth of auths) {
+    //   this._auths.set(auth.id, auth)
+    // }
+  }
+
+  public async accept(id: string) {
+    const auth = await this._api.accept(id)
+    this._auths.set(auth.id, auth)
+  }
+
+  public async deny(id: string) {
+    const auth = await this._api.deny(id)
+    this._auths.set(auth.id, auth)
   }
 }

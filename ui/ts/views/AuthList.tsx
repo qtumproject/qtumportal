@@ -5,18 +5,23 @@ import { inject, observer } from "mobx-react"
 import { AuthStore } from "../AuthStore"
 import { IAuthorization } from "../types"
 
-function AuthItem(props: { auth: IAuthorization }) {
-  const { auth } = props
+function AuthItem(props: { auth: IAuthorization, authStore: AuthStore }) {
+  const { auth, authStore } = props
   const { method, params } = auth.request
   return (
     <li>
       <h3>{method}</h3>
+      <p>{auth.state}</p>
       <pre>
         {JSON.stringify(params, null, "  ")}
       </pre>
       <p>{auth.createdAt}</p>
-      <button>Approve</button>
-      <button>Deny</button>
+      { auth.state === "pending" &&
+        <p>
+          <button onClick={() => authStore.accept(auth.id)}>Approve</button>
+          <button onClick={() => authStore.deny(auth.id)}>Deny</button>
+        </p>
+      }
     </li>
   )
 }
@@ -37,8 +42,7 @@ export class AuthList extends React.Component<IAuthListProps, {}> {
 
     return (
       <ul>
-        {authStore.counter}
-        {auths.map((auth) => <AuthItem auth={auth} />)}
+        {auths.map((auth) => <AuthItem key={auth.id} auth={auth} authStore={authStore}/>)}
       </ul>
     )
   }

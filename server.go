@@ -85,7 +85,7 @@ func NewServer(opts ServerOption) *Server {
 	e.GET("/authorizations", s.listAuthorizations)
 	e.GET("/authorizations/:id", s.getAuthorization)
 	e.POST("/authorizations/:id/accept", s.acceptAuthorization)
-	e.POST("/authorizations/:id/deny", s.acceptAuthorization)
+	e.POST("/authorizations/:id/deny", s.denyAuthorization)
 
 	return s
 }
@@ -116,7 +116,7 @@ func (s *Server) startAuthService() error {
 }
 
 func (s *Server) listAuthorizations(c echo.Context) error {
-	auths := s.authStore.pendingAuthorizations()
+	auths := s.authStore.allAuthorizations()
 	return c.JSON(http.StatusOK, auths)
 }
 
@@ -138,7 +138,8 @@ func (s *Server) acceptAuthorization(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusBadRequest, err)
 	}
 
-	return c.NoContent(http.StatusOK)
+	auth, _ := s.authStore.get(id)
+	return c.JSON(http.StatusOK, auth)
 }
 
 func (s *Server) denyAuthorization(c echo.Context) error {
@@ -148,7 +149,8 @@ func (s *Server) denyAuthorization(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusBadRequest, err)
 	}
 
-	return c.NoContent(http.StatusOK)
+	auth, _ := s.authStore.get(id)
+	return c.JSON(http.StatusOK, auth)
 }
 
 func (s *Server) proxyRPC(c echo.Context) error {

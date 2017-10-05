@@ -65,21 +65,31 @@ func (s *authorizationStore) get(id string) (*Authorization, bool) {
 	return auth, found
 }
 
-func (s *authorizationStore) pendingAuthorizations() []*Authorization {
+func (s *authorizationStore) allAuthorizations() []*Authorization {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
 	var auths []*Authorization
 
 	for _, auth := range s.authorizaitons {
-		if auth.State == AuthorizationPending {
-			auths = append(auths, auth)
-		}
+		auths = append(auths, auth)
 	}
 
 	sort.Slice(auths, func(i, j int) bool {
 		return auths[i].CreatedAt.After(auths[j].CreatedAt)
 	})
+
+	return auths
+}
+
+func (s *authorizationStore) pendingAuthorizations() []*Authorization {
+	var auths []*Authorization
+
+	for _, auth := range s.allAuthorizations() {
+		if auth.State == AuthorizationPending {
+			auths = append(auths, auth)
+		}
+	}
 
 	return auths
 }
