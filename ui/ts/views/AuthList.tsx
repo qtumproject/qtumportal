@@ -41,9 +41,14 @@ export class AuthList extends React.Component<IAuthListProps, {}> {
     const { auths } = authStore
 
     return (
-      <ul>
-        {auths.map((auth) => <AuthItem key={auth.id} auth={auth} authStore={authStore}/>)}
-      </ul>
+      <div>
+        Pending Authorizations: {authStore.pendingAuths.length}
+
+        <ul>
+          {auths.map((auth) => <AuthItem key={auth.id} auth={auth} authStore={authStore}/>)}
+        </ul>
+      </div>
+
     )
   }
 }

@@ -18,6 +18,8 @@ async function init() {
   const authAPI = new AuthAPI(QPORTAL_AUTH_BASEURL)
   const authStore = new AuthStore(authAPI)
 
+  authStore.startAutoRefresh()
+
   Object.assign(window, {
     authStore,
   })

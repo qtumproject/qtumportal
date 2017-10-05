@@ -16,7 +16,9 @@ import (
 
 	"github.com/pkg/errors"
 
+	"github.com/gorilla/websocket"
 	"github.com/labstack/echo"
+	"github.com/olebedev/emitter"
 )
 
 type Server struct {
@@ -26,6 +28,9 @@ type Server struct {
 
 	authApp  *echo.Echo
 	proxyApp *echo.Echo
+
+	wsUpgrader *websocket.Upgrader
+	emitter    *emitter.Emitter
 }
 
 type ServerOption struct {
@@ -39,9 +44,21 @@ type ServerOption struct {
 func NewServer(opts ServerOption) *Server {
 	authStore := newAuthorizationStore()
 
+	var wsCheckOrigin func(req *http.Request) bool
+
+	if opts.DebugMode {
+		wsCheckOrigin = func(req *http.Request) bool {
+			return true
+		}
+	}
+
 	s := &Server{
 		Options:   opts,
 		authStore: authStore,
+		emitter:   &emitter.Emitter{},
+		wsUpgrader: &websocket.Upgrader{
+			CheckOrigin: wsCheckOrigin,
+		},
 	}
 
 	e := echo.New()
@@ -82,6 +99,7 @@ func NewServer(opts ServerOption) *Server {
 			return next(c)
 		}
 	})
+	e.Any("/events", s.subscribeToEvents)
 	e.GET("/authorizations", s.listAuthorizations)
 	e.GET("/authorizations/:id", s.getAuthorization)
 	e.POST("/authorizations/:id/accept", s.acceptAuthorization)
@@ -115,6 +133,20 @@ func (s *Server) startAuthService() error {
 	return s.authApp.Start(addr)
 }
 
+func (s *Server) subscribeToEvents(c echo.Context) error {
+	conn, err := s.wsUpgrader.Upgrade(c.Response(), c.Request(), nil)
+	if err != nil {
+		return err
+	}
+	defer conn.Close()
+
+	for e := range s.emitter.On(eventRefresh) {
+		conn.WriteMessage(websocket.TextMessage, []byte(e.OriginalTopic))
+	}
+
+	return nil
+}
+
 func (s *Server) listAuthorizations(c echo.Context) error {
 	auths := s.authStore.allAuthorizations()
 	return c.JSON(http.StatusOK, auths)
@@ -138,6 +170,8 @@ func (s *Server) acceptAuthorization(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusBadRequest, err)
 	}
 
+	s.emitter.Emit(eventRefresh)
+
 	auth, _ := s.authStore.get(id)
 	return c.JSON(http.StatusOK, auth)
 }
@@ -148,6 +182,8 @@ func (s *Server) denyAuthorization(c echo.Context) error {
 	if err != nil {
 		return echo.NewHTTPError(http.StatusBadRequest, err)
 	}
+
+	s.emitter.Emit(eventRefresh)
 
 	auth, _ := s.authStore.get(id)
 	return c.JSON(http.StatusOK, auth)
@@ -194,11 +230,13 @@ func (s *Server) doRPCCallAuth(c echo.Context, jsonRPCReq *jsonRPCRequest) error
 			return errors.Wrap(err, "auth")
 		}
 
+		s.emitter.Emit(eventRefresh)
 		return c.JSON(http.StatusPaymentRequired, auth)
 	}
 
 	// If auth token is provided, verify then proxy
 	if s.authStore.verify(jsonRPCReq.Auth, jsonRPCReq) {
+		s.emitter.Emit(eventRefresh)
 		return s.doProxyRPCCall(c, jsonRPCReq)
 	}
 
