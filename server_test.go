@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"log"
 	"net/http"
 	"net/http/httptest"
 	"net/url"
@@ -60,7 +59,7 @@ func testProxy(s *Server, jsonreq *jsonRPCRequest) (*http.Response, error) {
 	}
 
 	jsonreqBody := bytes.NewReader(jsonreqBodyBytes)
-	req := httptest.NewRequest("POST", "/qtumrpc", jsonreqBody)
+	req := httptest.NewRequest("POST", "/", jsonreqBody)
 	req.Header.Set("Content-Type", "application/json")
 
 	res, err := testReq(s.proxyRPC, req)
@@ -175,7 +174,7 @@ func TestProxyUserAuthorization(t *testing.T) {
 	// jsonreq := &jsonRPCRequest{
 	// 	Method: "getnewaddress",
 	// }
-	req = httptest.NewRequest("POST", "/qtumd", bytes.NewReader([]byte(
+	req = httptest.NewRequest("POST", "/", bytes.NewReader([]byte(
 		fmt.Sprintf(`{"method": "getnewaddress", "auth": "%s", "params": null}`, auth1.ID),
 	)))
 	req.Header.Set("Content-Type", "application/json")
@@ -185,7 +184,7 @@ func TestProxyUserAuthorization(t *testing.T) {
 	is.Equal(http.StatusOK, res.StatusCode)
 
 	// Reusing auth token should return 403
-	req = httptest.NewRequest("POST", "/qtumd", bytes.NewReader([]byte(
+	req = httptest.NewRequest("POST", "/", bytes.NewReader([]byte(
 		fmt.Sprintf(`{"method": "getnewaddress", "auth": "%s", "params": null}`, auth1.ID),
 	)))
 	req.Header.Set("Content-Type", "application/json")

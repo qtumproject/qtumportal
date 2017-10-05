@@ -62,10 +62,12 @@ func NewServer(opts ServerOption) *Server {
 	}
 
 	e := echo.New()
+	e.Use(middleware.CORS())
 	e.Logger.SetOutput(ioutil.Discard)
 	e.HideBanner = true
 	s.proxyApp = e
-	e.POST("/qtumd", s.proxyRPC)
+	e.POST("/", s.proxyRPC)
+	e.GET("/api/authorizations/:id", s.getAuthorization)
 
 	e = echo.New()
 	e.Logger.SetOutput(ioutil.Discard)
@@ -219,6 +221,7 @@ func (s *Server) proxyRPC(c echo.Context) error {
 		return s.doProxyRPCCall(c, &jsonRPCReq)
 	}
 
+	log.Println("RPC Authorization requested", jsonRPCReq.Method)
 	return s.doRPCCallAuth(c, &jsonRPCReq)
 }
 
@@ -229,6 +232,8 @@ func (s *Server) doRPCCallAuth(c echo.Context, jsonRPCReq *jsonRPCRequest) error
 		if err != nil {
 			return errors.Wrap(err, "auth")
 		}
+
+		jsonRPCReq.Auth = auth.ID
 
 		s.emitter.Emit(eventRefresh)
 		return c.JSON(http.StatusPaymentRequired, auth)
