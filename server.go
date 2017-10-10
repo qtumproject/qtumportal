@@ -34,7 +34,7 @@ type Server struct {
 }
 
 type ServerOption struct {
-	Port          int
+	DAppPort      int
 	AuthPort      int
 	StaticBaseDir string
 	QtumdRPCURL   *url.URL
@@ -113,7 +113,7 @@ func NewServer(opts ServerOption) *Server {
 func (s *Server) Start() error {
 	errC := make(chan error)
 	go func() {
-		errC <- s.startProxyService()
+		errC <- s.startDAppService()
 	}()
 
 	go func() {
@@ -123,8 +123,8 @@ func (s *Server) Start() error {
 	return <-errC
 }
 
-func (s *Server) startProxyService() error {
-	addr := fmt.Sprintf(":%d", s.Options.Port)
+func (s *Server) startDAppService() error {
+	addr := fmt.Sprintf(":%d", s.Options.DAppPort)
 	log.Println("RPC service listening", addr)
 	return s.proxyApp.Start(addr)
 }
