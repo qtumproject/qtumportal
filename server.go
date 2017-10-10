@@ -74,19 +74,25 @@ func NewServer(opts ServerOption) *Server {
 	}
 
 	e := echo.New()
-	e.Use(middleware.CORS())
+	if opts.DebugMode {
+		e.Use(middleware.CORS())
+	}
+
 	e.Logger.SetOutput(ioutil.Discard)
 	e.HideBanner = true
 	s.proxyApp = e
 	e.POST("/", s.proxyRPC)
 	e.GET("/api/authorizations/:id", s.getAuthorization)
-	log.Println("Serving DApp from", staticDir)
 	e.Use(middleware.StaticWithConfig(middleware.StaticConfig{
+		// support for SPA
+		HTML5: true,
+		Root:  opts.StaticBaseDir,
 		Skipper: func(c echo.Context) bool {
 			return c.Request().Method != "GET"
 		},
 		Index: "index.html",
 	}))
+	log.Println("Serving DApp from", staticDir)
 
 	e = echo.New()
 	e.Logger.SetOutput(ioutil.Discard)
