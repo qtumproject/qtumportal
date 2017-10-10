@@ -26,19 +26,8 @@ export class AuthAPI {
     return res.json()
   }
 
-  public notifyEvents(cb: (err?: any, data?: any) => void): void {
-    const ws = new WebSocket(`${this._baseURL.replace("http", "ws")}/events`)
 
-    ws.onclose = (e) => {
-      cb(e)
-    }
-
-    ws.onerror = (e) => {
-      cb(e)
-    }
-
-    ws.onmessage = (e) => {
-      cb(null, e.data)
-    }
+  public eventsSocket(): WebSocket {
+    return new WebSocket(`${this._baseURL.replace("http", "ws")}/events`)
   }
 }

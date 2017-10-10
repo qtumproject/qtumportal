@@ -10,7 +10,7 @@ import { AuthList } from "./views/AuthList"
 
 if (Object.is(process.env.NODE_ENV, "development")) {
   const QTUMPORTAL_CONFIG = {
-    AUTH_BASEURL: "http://localhost:9898",
+    AUTH_BASEURL: "http://localhost:9899",
   }
 
   Object.assign(window, {
@@ -28,7 +28,7 @@ async function init() {
     authStore,
   })
 
-  authStore.loadAuthorizations()
+  // authStore.loadAuthorizations()
 
   const app = (
     <Provider authStore={authStore} >

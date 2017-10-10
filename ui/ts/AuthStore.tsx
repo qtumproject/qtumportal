@@ -4,6 +4,7 @@ import { IAuthorization } from "./types"
 
 export class AuthStore {
   @observable public _auths: Map<string, IAuthorization> = new Map()
+  @observable public connState: "connected" | "connecting" | "disconnected" = "disconnected"
 
   constructor(private _api: AuthAPI) {
   }
@@ -14,7 +15,7 @@ export class AuthStore {
 
   @computed get auths(): IAuthorization[] {
     const auths: IAuthorization[] = []
-    for (const auth of this._auths.values())  {
+    for (const auth of this._auths.values()) {
       auths.push(auth)
     }
 
@@ -26,17 +27,33 @@ export class AuthStore {
   }
 
   public startAutoRefresh() {
-    this._api.notifyEvents((err, data) => {
-      if (err) {
-        this._auths = new Map()
+    if (this.connState !== "disconnected") {
+      return
+    }
 
-        setTimeout(() => {
-          this.startAutoRefresh()
-        }, 2000)
-        return
-      }
+    const so = this._api.eventsSocket()
+    this.connState = "connecting"
 
-      if (data === "refresh") {
+    so.addEventListener("close", (e) => {
+      // console.log("socket close", e)
+      this.connState = "disconnected"
+      setTimeout(this.startAutoRefresh.bind(this), 2000)
+    })
+
+    so.addEventListener("error", (e) => {
+      // console.log("socket error", e)
+      this.connState = "disconnected"
+      setTimeout(this.startAutoRefresh.bind(this), 2000)
+    })
+
+    so.addEventListener("open", () => {
+      this.connState = "connected"
+
+      this.loadAuthorizations()
+    })
+
+    so.addEventListener("message", (e) => {
+      if (e.data === "refresh") {
         this.loadAuthorizations()
       }
     })
