@@ -52,6 +52,10 @@ func NewServer(opts ServerOption) *Server {
 
 	var wsCheckOrigin func(req *http.Request) bool
 
+	if opts.QtumdRPCURL.User == nil {
+		panic("must specify user and password in QTUM_RPC URL")
+	}
+
 	if opts.DebugMode {
 		wsCheckOrigin = func(req *http.Request) bool {
 			return true
@@ -105,6 +109,10 @@ func NewServer(opts ServerOption) *Server {
 	// e.Use(middleware.Static("ui/build"))
 	e.Use(func(next echo.HandlerFunc) echo.HandlerFunc {
 		return func(c echo.Context) error {
+			if c.Request().Method != "GET" {
+				return next(c)
+			}
+
 			p := c.Request().URL.Path
 
 			isIndex := p == "/"
@@ -316,7 +324,18 @@ func (s *Server) doProxyRPCCall(c echo.Context, jsonRPCReq *jsonRPCRequest) erro
 	}
 
 	auth := c.Request().Header.Get("Authorization")
-	rpcReq.Header.Set("Authorization", auth)
+	if auth == "" {
+		rpcReq.Header.Set("Authorization", auth)
+	} else {
+		user := rpcURL.User.Username()
+		pass, hasPass := rpcURL.User.Password()
+
+		if !hasPass || user == "" {
+			return errors.New("Need to specify Authorization header for RPC call")
+		}
+
+		rpcReq.SetBasicAuth(user, pass)
+	}
 
 	rpcRes, err := http.DefaultClient.Do(rpcReq)
 	if err != nil {
