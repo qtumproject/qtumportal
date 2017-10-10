@@ -13,7 +13,9 @@ func init() {
 	dappPort := cmd.Flag("dapp-port", "port to serve DApp content").Default("9888").Int()
 	authPort := cmd.Flag("auth-port", "port to serve DApp authorization API").Default("9899").Int()
 
-	appDir := cmd.Flag("appdir", "DApp content directory").Default(".").String()
+	devMode := cmd.Flag("dev", "[Insecure] Developer mode").Default("false").Bool()
+
+	appDir := cmd.Arg("appdir", "DApp content directory").Default(".").String()
 
 	cmd.Action(func(pc *kingpin.ParseContext) error {
 		opts := portal.ServerOption{
@@ -22,6 +24,7 @@ func init() {
 			StaticBaseDir: *appDir,
 
 			QtumdRPCURL: getQtumRPCURL(),
+			DebugMode:   *devMode,
 		}
 
 		s := portal.NewServer(opts)

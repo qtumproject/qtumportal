@@ -8,7 +8,9 @@ import (
 	"mime"
 	"net/http"
 	"net/url"
+	"os"
 	"path"
+	"path/filepath"
 
 	"github.com/labstack/echo/middleware"
 
@@ -41,6 +43,10 @@ type ServerOption struct {
 	DebugMode     bool
 }
 
+type qtumPortalUIConfig struct {
+	AuthBaseURL string `json:"AUTH_BASEURL"`
+}
+
 func NewServer(opts ServerOption) *Server {
 	authStore := newAuthorizationStore()
 
@@ -61,6 +67,12 @@ func NewServer(opts ServerOption) *Server {
 		},
 	}
 
+	staticDir, err := filepath.Abs(opts.StaticBaseDir)
+	if err != nil {
+		log.Errorf("Invalid DApp dir %s: %s", staticDir, err)
+		os.Exit(1)
+	}
+
 	e := echo.New()
 	e.Use(middleware.CORS())
 	e.Logger.SetOutput(ioutil.Discard)
@@ -68,6 +80,13 @@ func NewServer(opts ServerOption) *Server {
 	s.proxyApp = e
 	e.POST("/", s.proxyRPC)
 	e.GET("/api/authorizations/:id", s.getAuthorization)
+	log.Println("Serving DApp from", staticDir)
+	e.Use(middleware.StaticWithConfig(middleware.StaticConfig{
+		Skipper: func(c echo.Context) bool {
+			return c.Request().Method != "GET"
+		},
+		Index: "index.html",
+	}))
 
 	e = echo.New()
 	e.Logger.SetOutput(ioutil.Discard)
@@ -82,13 +101,41 @@ func NewServer(opts ServerOption) *Server {
 		return func(c echo.Context) error {
 			p := c.Request().URL.Path
 
-			if p[len(p)-1] == '/' {
+			isIndex := p == "/"
+
+			if isIndex {
 				p += "index.html"
 			}
 
 			// strip off leading /
 			assetName := p[1:]
 			data, err := ui.Asset(assetName)
+
+			if isIndex {
+				config := qtumPortalUIConfig{
+					AuthBaseURL: fmt.Sprintf("http://localhost:%d", opts.AuthPort),
+				}
+
+				var buf bytes.Buffer
+
+				buf.Write([]byte(`<body>
+<script type="text/javascript">
+//<!CDATA[[
+QTUMPORTAL_CONFIG =
+`))
+
+				enc := json.NewEncoder(&buf)
+				err := enc.Encode(config)
+				if err != nil {
+					return errors.Wrap(err, "index.html JS inject")
+				}
+				buf.Write([]byte(`
+//]]>
+</script>`))
+
+				data = bytes.Replace(data, []byte("<body>"), buf.Bytes(), 1)
+			}
+
 			if err == nil {
 				ext := path.Ext(p)
 				contentType := mime.TypeByExtension(ext)
@@ -125,7 +172,7 @@ func (s *Server) Start() error {
 
 func (s *Server) startDAppService() error {
 	addr := fmt.Sprintf(":%d", s.Options.DAppPort)
-	log.Println("RPC service listening", addr)
+	log.Println("DApp service listening", addr)
 	return s.proxyApp.Start(addr)
 }
 
@@ -221,7 +268,7 @@ func (s *Server) proxyRPC(c echo.Context) error {
 		return s.doProxyRPCCall(c, &jsonRPCReq)
 	}
 
-	log.Println("RPC Authorization requested", jsonRPCReq.Method)
+	log.Println("RPC Authorization requested:", jsonRPCReq.Method)
 	return s.doRPCCallAuth(c, &jsonRPCReq)
 }
 
