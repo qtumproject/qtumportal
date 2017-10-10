@@ -2,7 +2,13 @@ import { QtumRPC } from "qtumjs"
 import * as React from "react"
 import { render } from "react-dom"
 
-const rpc = new QtumRPC("http://howard:yeh@localhost:9999")
+let rpcURL: string = window.location.origin
+
+if (process.env.NODE_ENV === "development") {
+  rpcURL = "http://localhost:9888"
+}
+
+const rpc = new QtumRPC(rpcURL)
 
 class App extends React.Component<{}, { addresses: string[], isLoading: boolean }> {
   constructor(props: any) {
