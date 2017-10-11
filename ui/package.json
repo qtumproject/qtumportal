@@ -5,7 +5,7 @@
   "license": "MIT",
   "scripts": {
     "start": "neutrino start",
-    "build": "tsc && neutrino build --use neutrino-preset-react"
+    "build": "tsc && neutrino build"
   },
   "devDependencies": {
     "neutrino": "^7.0.2",

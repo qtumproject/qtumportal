@@ -3,10 +3,17 @@ module.exports = {
     entry: 'index.jsx',
   },
   use: [
-    'neutrino-preset-react',
+    [
+      'neutrino-preset-react',
+      {
+        html: {
+          title: 'QTUM Portal'
+        },
+      },
+    ],
     (neutrino) => neutrino.config
       .entry('vendor')
-        .add('react')
-        .add('react-dom')
+      .add('react')
+      .add('react-dom')
   ]
 };
