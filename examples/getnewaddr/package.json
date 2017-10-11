@@ -16,7 +16,7 @@
   "dependencies": {
     "@types/react": "^16.0.9",
     "@types/react-dom": "^16.0.0",
-    "qtumjs": "^0.0.3",
+    "qtumjs": "^0.0.4",
     "react": "^16.0.0",
     "react-dom": "^16.0.0"
   }
