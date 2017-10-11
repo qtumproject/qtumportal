@@ -50,12 +50,11 @@ type qtumPortalUIConfig struct {
 func NewServer(opts ServerOption) *Server {
 	authStore := newAuthorizationStore()
 
-	var wsCheckOrigin func(req *http.Request) bool
-
 	if opts.QtumdRPCURL.User == nil {
 		panic("must specify user and password in QTUM_RPC URL")
 	}
 
+	var wsCheckOrigin func(req *http.Request) bool
 	if opts.DebugMode {
 		wsCheckOrigin = func(req *http.Request) bool {
 			return true

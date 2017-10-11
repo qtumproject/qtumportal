@@ -5,4 +5,5 @@ assets:
 	go-bindata -o ui/assets.go -pkg ui -prefix ui/build ui/build
 
 cli: assets
-	go build github.com/hayeah/qtum-portal/cli/qtumportal
+	GOOS=darwin go build -o qtumportal-mac github.com/hayeah/qtum-portal/cli/qtumportal
+	GOOS=linux go build -o qtumportal-linux github.com/hayeah/qtum-portal/cli/qtumportal
