@@ -84,6 +84,7 @@ func NewServer(opts ServerOption) *Server {
 
 	e.Logger.SetOutput(ioutil.Discard)
 	e.HideBanner = true
+	e.HTTPErrorHandler = errorHandler
 	s.proxyApp = e
 	e.POST("/", s.proxyRPC)
 	e.GET("/api/authorizations/:id", s.getAuthorization)
@@ -101,6 +102,7 @@ func NewServer(opts ServerOption) *Server {
 	e = echo.New()
 	e.Logger.SetOutput(ioutil.Discard)
 	e.HideBanner = true
+	e.HTTPErrorHandler = errorHandler
 	s.authApp = e
 
 	if opts.DebugMode {
@@ -344,4 +346,47 @@ func (s *Server) doProxyRPCCall(c echo.Context, jsonRPCReq *jsonRPCRequest) erro
 	defer rpcRes.Body.Close()
 
 	return c.Stream(http.StatusOK, rpcRes.Header.Get("Content-Type"), rpcRes.Body)
+}
+
+func errorHandler(err error, c echo.Context) {
+	var (
+		code = http.StatusInternalServerError
+		msg  interface{}
+	)
+
+	if he, ok := err.(*echo.HTTPError); ok {
+		code = he.Code
+		msg = he.Message
+	} else {
+		// msg = err.Error()
+		msg = err
+	}
+
+	log.Println("code, msg", code, msg)
+	log.Println("committed", c.Response().Committed)
+
+	if !c.Response().Committed {
+		if c.Request().Method == http.MethodHead { // Issue #608
+			if err := c.NoContent(code); err != nil {
+				goto ERROR
+			}
+		} else {
+			type errorMsg struct {
+				Code    int    `json:"code"`
+				Message string `json:"message"`
+			}
+
+			errrmsg := &errorMsg{
+				Code:    code,
+				Message: fmt.Sprintf("%v", msg),
+			}
+
+			if err := c.JSON(code, errrmsg); err != nil {
+				log.Println("error handle json", err)
+				goto ERROR
+			}
+		}
+	}
+ERROR:
+	log.Errorln(err)
 }
