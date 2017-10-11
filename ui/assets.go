@@ -86,7 +86,7 @@ func indexE3f8d3690cb9dc986759Js() (*asset, error) {
 		return nil, err
 	}
 
-	info := bindataFileInfo{name: "index.e3f8d3690cb9dc986759.js", size: 73189, mode: os.FileMode(420), modTime: time.Unix(1507712714, 0)}
+	info := bindataFileInfo{name: "index.e3f8d3690cb9dc986759.js", size: 73189, mode: os.FileMode(420), modTime: time.Unix(1507712995, 0)}
 	a := &asset{bytes: bytes, info: info}
 	return a, nil
 }
@@ -106,7 +106,7 @@ func indexHtml() (*asset, error) {
 		return nil, err
 	}
 
-	info := bindataFileInfo{name: "index.html", size: 844, mode: os.FileMode(420), modTime: time.Unix(1507712714, 0)}
+	info := bindataFileInfo{name: "index.html", size: 844, mode: os.FileMode(420), modTime: time.Unix(1507712995, 0)}
 	a := &asset{bytes: bytes, info: info}
 	return a, nil
 }
@@ -126,7 +126,7 @@ func runtimeE8db434cd3f85469d83bJs() (*asset, error) {
 		return nil, err
 	}
 
-	info := bindataFileInfo{name: "runtime.e8db434cd3f85469d83b.js", size: 1477, mode: os.FileMode(420), modTime: time.Unix(1507712714, 0)}
+	info := bindataFileInfo{name: "runtime.e8db434cd3f85469d83b.js", size: 1477, mode: os.FileMode(420), modTime: time.Unix(1507712995, 0)}
 	a := &asset{bytes: bytes, info: info}
 	return a, nil
 }
@@ -146,7 +146,7 @@ func vendorD95c06c9be1738a160e3Js() (*asset, error) {
 		return nil, err
 	}
 
-	info := bindataFileInfo{name: "vendor.d95c06c9be1738a160e3.js", size: 117513, mode: os.FileMode(420), modTime: time.Unix(1507712714, 0)}
+	info := bindataFileInfo{name: "vendor.d95c06c9be1738a160e3.js", size: 117513, mode: os.FileMode(420), modTime: time.Unix(1507712995, 0)}
 	a := &asset{bytes: bytes, info: info}
 	return a, nil
 }

@@ -75,12 +75,12 @@ func (s *authorizationStore) waitChange(ctx context.Context, id string) error {
 	auth, found := s.authorizaitons[id]
 	if !found {
 		s.mu.Unlock()
-		return errors.New("authorization not found")
+		return errors.New("not found")
 	}
 
 	if auth.State != AuthorizationPending {
 		s.mu.Unlock()
-		return errors.New("authorization not pending")
+		return errors.New("not pending")
 	}
 
 	// timeout
