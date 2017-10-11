@@ -378,9 +378,6 @@ func errorHandler(err error, c echo.Context) {
 		msg = err
 	}
 
-	log.Println("code, msg", code, msg)
-	log.Println("committed", c.Response().Committed)
-
 	if !c.Response().Committed {
 		if c.Request().Method == http.MethodHead { // Issue #608
 			if err := c.NoContent(code); err != nil {
