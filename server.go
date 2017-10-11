@@ -86,6 +86,7 @@ func NewServer(opts ServerOption) *Server {
 	e.HTTPErrorHandler = errorHandler
 	s.proxyApp = e
 	e.POST("/", s.proxyRPC)
+	e.GET("/api/authorizations/:id/onchange", s.waitAuthorizationChange)
 	e.GET("/api/authorizations/:id", s.getAuthorization)
 	e.Use(middleware.StaticWithConfig(middleware.StaticConfig{
 		// support for SPA
@@ -209,6 +210,22 @@ func (s *Server) subscribeToEvents(c echo.Context) error {
 	}
 
 	return nil
+}
+
+func (s *Server) waitAuthorizationChange(c echo.Context) error {
+	ctx := c.Request().Context()
+	id := c.Param("id")
+	err := s.authStore.waitChange(ctx, id)
+	if err != nil {
+		return &echo.HTTPError{
+			Code:    http.StatusBadRequest,
+			Message: err.Error(),
+		}
+	}
+
+	auth, _ := s.authStore.get(id)
+
+	return c.JSON(http.StatusOK, auth)
 }
 
 func (s *Server) listAuthorizations(c echo.Context) error {

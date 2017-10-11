@@ -2,11 +2,15 @@ package portal
 
 import (
 	"bytes"
+	"context"
 	"crypto/rand"
 	"encoding/base64"
+	"fmt"
 	"sort"
 	"sync"
 	"time"
+
+	"github.com/olebedev/emitter"
 
 	"github.com/pkg/errors"
 )
@@ -48,13 +52,50 @@ type Authorization struct {
 type authorizationStore struct {
 	authorizaitons map[string]*Authorization
 
+	events *emitter.Emitter
+
 	mu sync.Mutex
+}
+
+func authChangeTopic(id string) string {
+	return fmt.Sprintf("change:%s", id)
 }
 
 func newAuthorizationStore() *authorizationStore {
 	return &authorizationStore{
+		events:         &emitter.Emitter{},
 		authorizaitons: make(map[string]*Authorization),
 	}
+}
+
+// waitChange blocks until an authorization changes its state
+func (s *authorizationStore) waitChange(ctx context.Context, id string) error {
+	s.mu.Lock()
+
+	auth, found := s.authorizaitons[id]
+	if !found {
+		s.mu.Unlock()
+		return errors.New("authorization not found")
+	}
+
+	if auth.State != AuthorizationPending {
+		s.mu.Unlock()
+		return errors.New("authorization not pending")
+	}
+
+	// timeout
+	topic := authChangeTopic(id)
+	resolved := s.events.Once(topic)
+	s.mu.Unlock()
+
+	select {
+	case <-resolved:
+		return nil
+	case <-ctx.Done():
+		s.events.Off(topic, resolved)
+	}
+
+	return nil
 }
 
 func (s *authorizationStore) get(id string) (*Authorization, bool) {
@@ -143,6 +184,8 @@ func (s *authorizationStore) verify(id string, req *jsonRPCRequest) bool {
 
 	auth.State = AuthorizationConsumed
 
+	s.emitAuthChange(id)
+
 	return true
 }
 
@@ -170,6 +213,8 @@ func (s *authorizationStore) accept(id string) error {
 
 	auth.State = AuthorizationAccepted
 
+	s.emitAuthChange(id)
+
 	return nil
 }
 
@@ -189,8 +234,11 @@ func (s *authorizationStore) deny(id string) error {
 
 	auth.State = AuthorizationDenied
 
+	s.emitAuthChange(id)
+
 	return nil
 }
 
-// denyAuthorization(jsonRequest)
-// acceptAuthorization(jsonRequest)
+func (s *authorizationStore) emitAuthChange(id string) {
+	s.events.Emit(authChangeTopic(id))
+}
