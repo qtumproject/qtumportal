@@ -8,19 +8,40 @@ import { IAuthorization } from "../types"
 function AuthItem(props: { auth: IAuthorization, authStore: AuthStore }) {
   const { auth, authStore } = props
   const { method, params } = auth.request
+
+  const createdAt = new Date(auth.createdAt)
+
+  const dd = createdAt.getDate()
+  // const yy = createdAt.getFullYear()
+  const MM = createdAt.getMonth()
+
+  const hh = createdAt.getHours()
+  const mm = createdAt.getMinutes()
+  const createdAtFormated = `${MM}/${dd} ${hh}:${mm}`
+
+  const isDenied = auth.state === "denied"
+
   return (
-    <li>
-      <h3>{method}</h3>
-      <p>{auth.state}</p>
-      <pre>
+    <li className="auth-item">
+      <div className="auth-item__topbar">
+        <h3 className="auth-item__title">{method}</h3>
+        <div className="auth-item__created">{createdAtFormated}</div>
+      </div>
+
+      <div className="auth-item__id">{auth.id}</div>
+      <pre className="auth-item__params">
         {JSON.stringify(params, null, "  ")}
       </pre>
-      <p>{auth.createdAt}</p>
+
       {auth.state === "pending" &&
-        <p>
-          <button onClick={() => authStore.accept(auth.id)}>Approve</button>
-          <button onClick={() => authStore.deny(auth.id)}>Deny</button>
+        <p className="auth-item__actions">
+          <button className="btn btn--primary" onClick={() => authStore.accept(auth.id)}>Approve</button>
+          <button className="btn btn--caution" onClick={() => authStore.deny(auth.id)}>Deny</button>
         </p>
+      }
+
+      {auth.state !== "pending" &&
+        <p className={`auth-item__state ${isDenied && "auth-item__state--denied"}`}>{auth.state}</p>
       }
     </li>
   )
@@ -40,18 +61,17 @@ export class AuthList extends React.Component<IAuthListProps, {}> {
     const { authStore } = this.props
     const { auths } = authStore
 
+    const notConnected = authStore.connState !== "connected"
+
     return (
       <div>
-        <p>
-          Connection: {authStore.connState}
-        </p>
+        {notConnected &&
+          <p>
+            Connection: {authStore.connState}
+          </p>
+        }
 
-        <p>
-          Pending Authorizations: {authStore.pendingAuths.length}
-        </p>
-
-
-        <ul>
+        <ul className="auth-list">
           {auths.map((auth) => <AuthItem key={auth.id} auth={auth} authStore={authStore} />)}
         </ul>
       </div>

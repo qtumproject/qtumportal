@@ -1,0 +1,83 @@
+/* @import "~normalize.css" */
+
+html, body {
+  font-family: 'Lato', sans-serif;
+  color: #6C5F5F;
+}
+
+.main-container {
+  width: 800px;
+  margin: 0 auto;
+}
+
+.app-title {
+  font-size: 14px;
+  text-align: center;
+  margin: 30px 0;
+}
+
+.auth-list {
+  list-style: none;
+  padding: 0;
+}
+
+.auth-item {
+  border: 1px solid #F9F9F9;
+  margin-bottom: 45px;
+  padding: 20px 15px;
+  box-shadow: 0 2px 4px 0 rgba(224,224,224,0.50);
+}
+
+.auth-item__title {
+  margin: 0;
+}
+
+.auth-item__id {
+  font-size: 10px;
+}
+
+.auth-item__params {
+  background: #F2F2F2;
+  padding: 10px;
+}
+
+.auth-item__topbar {
+  position: relative;
+}
+
+.auth-item__created {
+  position: absolute;
+  right: 0;
+  top: 0;
+  bottom: 0;
+}
+
+.auth-item__actions .btn {
+  margin-right: 10px;
+}
+
+.auth-item__state {
+  text-align: center;
+  text-transform: uppercase;
+}
+
+.auth-item__state--denied {
+  color: #FF4343;
+}
+
+.btn {
+  height: 40px;
+  width: 100px;
+  border: 0px;
+  border-radius: 3px;
+}
+
+.btn--primary {
+  color: white;
+  background: #2CAB00;
+}
+
+.btn--caution {
+  color: white;
+  background: #E95312;
+}

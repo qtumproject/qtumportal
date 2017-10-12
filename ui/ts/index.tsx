@@ -1,3 +1,7 @@
+// tslint:disable-next-line:no-var-requires
+require("normalize.css")
+require("../css/index.css")
+
 import * as React from "react"
 import { render } from "react-dom"
 
@@ -6,7 +10,7 @@ import { Provider } from "mobx-react"
 import { AuthAPI } from "./AuthAPI"
 import { AuthStore } from "./AuthStore"
 
-import { AuthList } from "./views/AuthList"
+import { App } from "./views/App"
 
 if (Object.is(process.env.NODE_ENV, "development")) {
   const QTUMPORTAL_CONFIG = {
@@ -32,10 +36,7 @@ async function init() {
 
   const app = (
     <Provider authStore={authStore} >
-      <div>
-        <h1>Authorizations</h1>
-        <AuthList />
-      </div>
+      <App />
     </Provider>
   )
   render(app, document.getElementById("root"))
