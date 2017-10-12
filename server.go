@@ -300,13 +300,14 @@ func (s *Server) proxyRPC(c echo.Context) error {
 		return s.doProxyRPCCall(c, &jsonRPCReq)
 	}
 
-	log.Println("RPC Authorization requested:", jsonRPCReq.Method)
 	return s.doRPCCallAuth(c, &jsonRPCReq)
 }
 
 func (s *Server) doRPCCallAuth(c echo.Context, jsonRPCReq *jsonRPCRequest) error {
 	// If no auth token is provided, create authorization object and return 402
 	if jsonRPCReq.Auth == "" {
+		log.Println("RPC requested:", jsonRPCReq.Method)
+
 		auth, err := s.authStore.create(jsonRPCReq)
 		if err != nil {
 			return errors.Wrap(err, "auth")
@@ -320,6 +321,7 @@ func (s *Server) doRPCCallAuth(c echo.Context, jsonRPCReq *jsonRPCRequest) error
 
 	// If auth token is provided, verify then proxy
 	if s.authStore.verify(jsonRPCReq.Auth, jsonRPCReq) {
+		log.Println("RPC authorized:", jsonRPCReq.Method)
 		s.emitter.Emit(eventRefresh)
 		return s.doProxyRPCCall(c, jsonRPCReq)
 	}
