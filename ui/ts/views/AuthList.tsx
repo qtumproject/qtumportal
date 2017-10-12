@@ -17,7 +17,12 @@ function AuthItem(props: { auth: IAuthorization, authStore: AuthStore }) {
 
   const hh = createdAt.getHours()
   const mm = createdAt.getMinutes()
-  const createdAtFormated = `${MM}/${dd} ${hh}:${mm}`
+  const ss = createdAt.getSeconds()
+  let ssString = ss.toString()
+  if (ss < 10) {
+    ssString = "0" + ssString
+  }
+  const createdAtFormated = `${MM}/${dd} ${hh}:${mm}:${ssString}`
 
   const isDenied = auth.state === "denied"
 
@@ -62,12 +67,19 @@ export class AuthList extends React.Component<IAuthListProps, {}> {
     const { auths } = authStore
 
     const notConnected = authStore.connState !== "connected"
+    const hasNoAuths = auths.length === 0
 
     return (
       <div>
         {notConnected &&
-          <p>
-            Connection: {authStore.connState}
+          <p className="notice">
+            Disconnected from QTUM Portal
+          </p>
+        }
+
+        {!notConnected && hasNoAuths &&
+          <p className="notice">
+            No authorization is pending
           </p>
         }
 

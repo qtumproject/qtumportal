@@ -81,3 +81,8 @@ html, body {
   color: white;
   background: #E95312;
 }
+
+.notice {
+  background: #FFFCE2;
+  padding: 20px;
+}

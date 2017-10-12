@@ -35,20 +35,15 @@ export class AuthStore {
     this.connState = "connecting"
 
     so.addEventListener("close", (e) => {
-      // console.log("socket close", e)
-      this.connState = "disconnected"
-      setTimeout(this.startAutoRefresh.bind(this), 2000)
+      this.onDisconnect()
     })
 
     so.addEventListener("error", (e) => {
-      // console.log("socket error", e)
-      this.connState = "disconnected"
-      setTimeout(this.startAutoRefresh.bind(this), 2000)
+      this.onDisconnect()
     })
 
     so.addEventListener("open", () => {
       this.connState = "connected"
-
       this.loadAuthorizations()
     })
 
@@ -81,5 +76,11 @@ export class AuthStore {
   public async deny(id: string) {
     const auth = await this._api.deny(id)
     this._auths.set(auth.id, auth)
+  }
+
+  private onDisconnect() {
+    this._auths = new Map()
+    this.connState = "disconnected"
+    setTimeout(this.startAutoRefresh.bind(this), 2000)
   }
 }
