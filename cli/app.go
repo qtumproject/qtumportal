@@ -17,9 +17,18 @@ func Run() {
 }
 
 func getQtumRPCURL() *url.URL {
+	if *qtumRPC == "" {
+		log.Fatalln("Please set QTUM_RPC to qtumd's RPC URL")
+	}
+
 	url, err := url.Parse(*qtumRPC)
 	if err != nil {
-		log.Fatalln("Invalid QTUM RPC URL:", *qtumRPC)
+		log.Fatalln("QTUM_RPC URL:", *qtumRPC)
 	}
+
+	if url.User == nil {
+		log.Fatalln("QTUM_RPC URL (must specify user & password):", *qtumRPC)
+	}
+
 	return url
 }
