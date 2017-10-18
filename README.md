@@ -54,7 +54,9 @@ In another tab, open http://localhost:9899 to authorize transactions requested b
 
 Typically you'd be using a live-reload server when developing your HTML5 DApp. By default QTUM portal provides security by locking down the DApp from making cross domain requests. If you are using a dev server for development purposes, you'll need to disable CORS protection.
 
-The example DApp [getnewaddr](qtum-dapp-getnewaddr) uses [Neutrino](https://neutrino.js.org/) for project building. Start the Neutrino live-reload dev-server:
+The example DApp [getnewaddr](qtum-dapp-getnewaddr) uses [Neutrino](https://neutrino.js.org/) for project building.
+
+Start the Neutrino live-reload dev-server:
 
 ```
 $ cd qtum-dapp-getnewaddr
@@ -63,6 +65,25 @@ $ npm start
 ✔ Build completed
 ```
 
+Then start qtumportal in dev-mode:
+
 ```
 $ qtumportal serve --dev
+INFO[0000] Auth service listening :9899
+INFO[0000] DApp service listening :9888
+```
+
+In your DApp code, configure the QtumRPC client to use `http://localhost:9888` as the RPC endpoint:
+
+```
+let rpcURL: string
+
+if (process.env.NODE_ENV === "development") {
+  rpcURL = "http://localhost:9888"
+} else {
+  // In production mode, make RPC request to origin host.
+  rpcURL = window.location.origin
+}
+
+const rpc = new QtumRPC(rpcURL)
 ```
