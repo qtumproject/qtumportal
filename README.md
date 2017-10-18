@@ -1,3 +1,19 @@
+# QTUM DApp Server
+
+A Web Server for running third-party DApps.
+
+All requests made by a DApp would block until you approve it in the authorization UI.
+
+# Install qtum-portal
+
+If you have golang installed, you can install the latest version:
+
+```
+go get -u github.com/hayeah/qtum-portal/cli/qtumportal
+```
+
+Or, you can download pre-built binaries from [Releases](https://github.com/hayeah/qtum-portal/releases)
+
 # Running A QTUM DApp
 
 First, we'll need to make sure that qtumd is running.
