@@ -87,3 +87,17 @@ if (process.env.NODE_ENV === "development") {
 
 const rpc = new QtumRPC(rpcURL)
 ```
+
+Open http://localhost:3000 in browser to develop using the Neutrino live-reload server.
+
+* * *
+
+If you are not using a live-reload server, you could also serve a static directory in dev mode:
+
+```
+$ qtumportal serve examples/getnewaddr/build --dev
+INFO[0000] DApp service listening :9888
+INFO[0000] Auth service listening :9899
+```
+
+Open http://localhost:9888 in browser.

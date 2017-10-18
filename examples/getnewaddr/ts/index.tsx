@@ -2,10 +2,12 @@ import { QtumRPC } from "qtumjs"
 import * as React from "react"
 import { render } from "react-dom"
 
-let rpcURL: string = window.location.origin
+let rpcURL: string
 
 if (process.env.NODE_ENV === "development") {
   rpcURL = "http://localhost:9888"
+} else {
+  rpcURL = window.location.origin
 }
 
 const rpc = new QtumRPC(rpcURL)
