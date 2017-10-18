@@ -15,13 +15,19 @@ func init() {
 
 	devMode := cmd.Flag("dev", "[Insecure] Developer mode").Default("false").Bool()
 
-	appDir := cmd.Arg("appdir", "DApp content directory").Default(".").String()
+	appDir := cmd.Arg("appdir", "DApp content directory").Default("").String()
 
 	cmd.Action(func(pc *kingpin.ParseContext) error {
+		staticDir := *appDir
+
+		if !*devMode && staticDir == "" {
+			staticDir = "."
+		}
+
 		opts := portal.ServerOption{
 			DAppPort:      *dappPort,
 			AuthPort:      *authPort,
-			StaticBaseDir: *appDir,
+			StaticBaseDir: staticDir,
 
 			QtumdRPCURL: getQtumRPCURL(),
 			DebugMode:   *devMode,

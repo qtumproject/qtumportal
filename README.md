@@ -50,3 +50,19 @@ Open the DApp in your browser at http://localhost:9888. Click the `getnewaddr` b
 
 In another tab, open http://localhost:9899 to authorize transactions requested by the DApp.
 
+# Developing QTUM DApp (Insecure)
+
+Typically you'd be using a live-reload server when developing your HTML5 DApp. By default QTUM portal provides security by locking down the DApp from making cross domain requests. If you are using a dev server for development purposes, you'll need to disable CORS protection.
+
+The example DApp [getnewaddr](qtum-dapp-getnewaddr) uses [Neutrino](https://neutrino.js.org/) for project building. Start the Neutrino live-reload dev-server:
+
+```
+$ cd qtum-dapp-getnewaddr
+$ npm start
+✔ Development server running on: http://localhost:3000
+✔ Build completed
+```
+
+```
+$ qtumportal serve --dev
+```

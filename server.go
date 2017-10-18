@@ -8,7 +8,6 @@ import (
 	"mime"
 	"net/http"
 	"net/url"
-	"os"
 	"path"
 	"path/filepath"
 
@@ -66,12 +65,6 @@ func NewServer(opts ServerOption) *Server {
 		},
 	}
 
-	staticDir, err := filepath.Abs(opts.StaticBaseDir)
-	if err != nil {
-		log.Errorf("Invalid DApp dir %s: %s", staticDir, err)
-		os.Exit(1)
-	}
-
 	e := echo.New()
 	if opts.DebugMode {
 		e.Use(middleware.CORS())
@@ -84,16 +77,25 @@ func NewServer(opts ServerOption) *Server {
 	e.POST("/", s.proxyRPC)
 	e.GET("/api/authorizations/:id/onchange", s.waitAuthorizationChange)
 	e.GET("/api/authorizations/:id", s.getAuthorization)
-	e.Use(middleware.StaticWithConfig(middleware.StaticConfig{
-		// support for SPA
-		HTML5: true,
-		Root:  opts.StaticBaseDir,
-		Skipper: func(c echo.Context) bool {
-			return c.Request().Method != "GET"
-		},
-		Index: "index.html",
-	}))
-	log.Println("Serving DApp from", staticDir)
+
+	if opts.StaticBaseDir != "" {
+		staticDir, err := filepath.Abs(opts.StaticBaseDir)
+		if err != nil {
+			log.Fatalf("Invalid DApp dir %s: %s\n", staticDir, err)
+		}
+
+		e.Use(middleware.StaticWithConfig(middleware.StaticConfig{
+			// support for SPA
+			HTML5: true,
+			Root:  opts.StaticBaseDir,
+			Skipper: func(c echo.Context) bool {
+				return c.Request().Method != "GET"
+			},
+			Index: "index.html",
+		}))
+
+		log.Println("Serving DApp from", staticDir)
+	}
 
 	e = echo.New()
 	e.Logger.SetOutput(ioutil.Discard)
