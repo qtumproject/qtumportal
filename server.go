@@ -361,7 +361,7 @@ func (s *Server) doProxyRPCCall(c echo.Context, jsonRPCReq *jsonRPCRequest) erro
 	}
 	defer rpcRes.Body.Close()
 
-	return c.Stream(http.StatusOK, rpcRes.Header.Get("Content-Type"), rpcRes.Body)
+	return c.Stream(rpcRes.StatusCode, rpcRes.Header.Get("Content-Type"), rpcRes.Body)
 }
 
 func errorHandler(err error, c echo.Context) {
