@@ -20,6 +20,14 @@ if (Object.is(process.env.NODE_ENV, "development")) {
   Object.assign(window, {
     QTUMPORTAL_CONFIG,
   })
+} else {
+  const QTUMPORTAL_CONFIG = {
+    AUTH_BASEURL: window.location.origin,
+  }
+
+  Object.assign(window, {
+    QTUMPORTAL_CONFIG,
+  })
 }
 
 async function init() {
