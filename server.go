@@ -35,6 +35,7 @@ type Server struct {
 }
 
 type ServerOption struct {
+	Bind          string
 	DAppPort      int
 	AuthPort      int
 	StaticBaseDir string
@@ -185,13 +186,13 @@ func (s *Server) Start() error {
 }
 
 func (s *Server) startDAppService() error {
-	addr := fmt.Sprintf(":%d", s.Options.DAppPort)
+	addr := fmt.Sprintf("%s:%d", s.Options.Bind, s.Options.DAppPort)
 	log.Println("DApp service listening", addr)
 	return s.proxyApp.Start(addr)
 }
 
 func (s *Server) startAuthService() error {
-	addr := fmt.Sprintf(":%d", s.Options.AuthPort)
+	addr := fmt.Sprintf("%s:%d", s.Options.Bind, s.Options.AuthPort)
 	log.Println("Auth service listening", addr)
 	return s.authApp.Start(addr)
 }
