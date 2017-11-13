@@ -1,6 +1,8 @@
+import "bulma/css/bulma.css"
+import "font-awesome/css/font-awesome.css"
+
 // tslint:disable-next-line:no-var-requires
-require("normalize.css")
-require("../css/index.css")
+require("./index.css")
 
 import * as React from "react"
 import { render } from "react-dom"
@@ -12,26 +14,9 @@ import { AuthStore } from "./AuthStore"
 
 import { App } from "./views/App"
 
-if (Object.is(process.env.NODE_ENV, "development")) {
-  const QTUMPORTAL_CONFIG = {
-    AUTH_BASEURL: "http://localhost:9899",
-  }
-
-  Object.assign(window, {
-    QTUMPORTAL_CONFIG,
-  })
-} else {
-  const QTUMPORTAL_CONFIG = {
-    AUTH_BASEURL: window.location.origin,
-  }
-
-  Object.assign(window, {
-    QTUMPORTAL_CONFIG,
-  })
-}
-
 async function init() {
-  const authAPI = new AuthAPI(QTUMPORTAL_CONFIG.AUTH_BASEURL)
+  const authBaseURL = typeof AUTH_BASEURL === "undefined" ? window.location.origin : AUTH_BASEURL
+  const authAPI = new AuthAPI(authBaseURL)
   const authStore = new AuthStore(authAPI)
 
   authStore.startAutoRefresh()

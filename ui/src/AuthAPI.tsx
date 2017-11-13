@@ -26,7 +26,6 @@ export class AuthAPI {
     return res.json()
   }
 
-
   public eventsSocket(): WebSocket {
     return new WebSocket(`${this._baseURL.replace("http", "ws")}/events`)
   }
