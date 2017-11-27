@@ -148,4 +148,5 @@ var rpcMethods = map[string]method{
 	// DEPRECATED. setaccount "address" "account"
 	// settxfee amount
 	// signmessage "address" "message"
+	"waitforlogs": {true},
 }
