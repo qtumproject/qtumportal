@@ -6,10 +6,12 @@ import (
 	"fmt"
 	"io/ioutil"
 	"mime"
+	"net"
 	"net/http"
 	"net/url"
 	"path"
 	"path/filepath"
+	"time"
 
 	"github.com/labstack/echo/middleware"
 
@@ -356,7 +358,17 @@ func (s *Server) doProxyRPCCall(c echo.Context, jsonRPCReq *jsonRPCRequest) erro
 		rpcReq.SetBasicAuth(user, pass)
 	}
 
-	rpcRes, err := http.DefaultClient.Do(rpcReq)
+	// Use context to break off proxy connection to RPC server when client disconnects
+	reqctx := c.Request().Context()
+
+	go func() {
+		<-reqctx.Done()
+		log.Println("client connection closed")
+	}()
+
+	rpcReq = rpcReq.WithContext(reqctx)
+
+	rpcRes, err := httpclient.Do(rpcReq)
 	if err != nil {
 		return errors.Wrap(err, "proxy RPC")
 	}
@@ -403,4 +415,24 @@ func errorHandler(err error, c echo.Context) {
 	}
 ERROR:
 	log.Errorln(err)
+}
+
+var transport = &http.Transport{
+	Proxy: http.ProxyFromEnvironment,
+	DialContext: (&net.Dialer{
+		Timeout:   30 * time.Second,
+		KeepAlive: 30 * time.Second,
+		DualStack: true,
+	}).DialContext,
+	MaxIdleConns:          100,
+	IdleConnTimeout:       90 * time.Second,
+	TLSHandshakeTimeout:   10 * time.Second,
+	ExpectContinueTimeout: 1 * time.Second,
+
+	// don't use keep alive. Breaks qtumd's long-polling
+	DisableKeepAlives: true,
+}
+
+var httpclient = &http.Client{
+	Transport: transport,
 }
