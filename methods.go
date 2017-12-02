@@ -149,4 +149,6 @@ var rpcMethods = map[string]method{
 	// settxfee amount
 	// signmessage "address" "message"
 	"waitforlogs": {true},
+
+	"help": {true},
 }
