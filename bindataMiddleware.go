@@ -6,8 +6,8 @@ import (
 	"mime"
 	"net/http"
 	"path"
+	"strings"
 
-	"github.com/hayeah/qtum-portal/ui"
 	"github.com/labstack/echo"
 	"github.com/pkg/errors"
 )
@@ -24,6 +24,8 @@ func newBindataMiddleware(config bindataConfig) func(next echo.HandlerFunc) echo
 }
 
 type bindataConfig struct {
+	// the prefix path to serve bindata resources
+	prefix      string
 	getter      bindataGetter
 	jsConstants map[string]interface{}
 }
@@ -66,16 +68,24 @@ func (s *bindataMiddleware) Handle(c echo.Context) error {
 
 	p := c.Request().URL.Path
 
+	if s.prefix != "" {
+		if !strings.HasPrefix(p, s.prefix) {
+			return next(c)
+		}
+
+		p = strings.TrimPrefix(p, s.prefix)
+	}
+
 	// TODO support prefix paths
-	isIndex := p == "/"
+	isIndex := p == "/" || p == ""
 
 	if isIndex {
-		p += "index.html"
+		p = "/index.html"
 	}
 
 	// strip off leading /
-	assetName := p[1:]
-	data, err := ui.Asset(assetName)
+	assetName := strings.TrimPrefix(p, "/")
+	data, err := s.getter(assetName)
 
 	if isIndex && s.jsConstants != nil {
 		data, err = s.injectJSConstantsIntoHTML(data)

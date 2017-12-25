@@ -11,10 +11,10 @@ import (
 	"path/filepath"
 	"time"
 
-	"github.com/labstack/echo/middleware"
-	_ "github.com/prometheus/log"
+	"github.com/hayeah/qtum-portal/assets/abiplay"
+	"github.com/hayeah/qtum-portal/assets/authui"
 
-	"github.com/hayeah/qtum-portal/ui"
+	"github.com/labstack/echo/middleware"
 
 	"github.com/pkg/errors"
 
@@ -110,7 +110,13 @@ func NewServer(opts ServerOption) *Server {
 	}
 
 	e.Use(newBindataMiddleware(bindataConfig{
-		getter: ui.Asset,
+		prefix:      "/abiplay",
+		getter:      abiplay.Asset,
+		jsConstants: map[string]interface{}{},
+	}))
+
+	e.Use(newBindataMiddleware(bindataConfig{
+		getter: authui.Asset,
 		jsConstants: map[string]interface{}{
 			"QTUMPORTAL_CONFIG": qtumPortalUIConfig{
 				AuthBaseURL: fmt.Sprintf("http://localhost:%d", opts.AuthPort),
