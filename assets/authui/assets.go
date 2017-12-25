@@ -10,7 +10,7 @@
 // ui/build/runtime.22988ab1266771ac9bdf.js
 // DO NOT EDIT!
 
-package ui
+package authui
 
 import (
 	"bytes"
