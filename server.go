@@ -109,6 +109,8 @@ func NewServer(opts ServerOption) *Server {
 		e.Use(middleware.CORS())
 	}
 
+	e.Use(middleware.Gzip())
+
 	e.Use(newBindataMiddleware(bindataConfig{
 		prefix:      "/abiplay",
 		getter:      abiplay.Asset,
