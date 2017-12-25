@@ -67,6 +67,15 @@ func NewServer(opts ServerOption) *Server {
 		},
 	}
 
+	s.proxyApp = s.makeDAppService()
+	s.authApp = s.makeAuthService()
+
+	return s
+}
+
+func (s *Server) makeDAppService() *echo.Echo {
+	opts := s.Options
+
 	e := echo.New()
 	if opts.DebugMode {
 		e.Use(middleware.CORS())
@@ -75,7 +84,7 @@ func NewServer(opts ServerOption) *Server {
 	e.Logger.SetOutput(ioutil.Discard)
 	e.HideBanner = true
 	e.HTTPErrorHandler = errorHandler
-	s.proxyApp = e
+
 	e.POST("/", s.proxyRPC)
 	e.GET("/api/authorizations/:id/onchange", s.waitAuthorizationChange)
 	e.GET("/api/authorizations/:id", s.getAuthorization)
@@ -99,7 +108,13 @@ func NewServer(opts ServerOption) *Server {
 		log.Println("Serving DApp from", staticDir)
 	}
 
-	e = echo.New()
+	return e
+}
+
+func (s *Server) makeAuthService() *echo.Echo {
+	opts := s.Options
+
+	e := echo.New()
 	e.Logger.SetOutput(ioutil.Discard)
 	e.HideBanner = true
 	e.HTTPErrorHandler = errorHandler
@@ -132,7 +147,7 @@ func NewServer(opts ServerOption) *Server {
 	e.POST("/authorizations/:id/accept", s.acceptAuthorization)
 	e.POST("/authorizations/:id/deny", s.denyAuthorization)
 
-	return s
+	return e
 }
 
 func (s *Server) Start() error {
