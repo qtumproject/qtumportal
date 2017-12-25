@@ -5,15 +5,14 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
-	"mime"
 	"net"
 	"net/http"
 	"net/url"
-	"path"
 	"path/filepath"
 	"time"
 
 	"github.com/labstack/echo/middleware"
+	_ "github.com/prometheus/log"
 
 	"github.com/hayeah/qtum-portal/ui"
 
@@ -109,62 +108,16 @@ func NewServer(opts ServerOption) *Server {
 	if opts.DebugMode {
 		e.Use(middleware.CORS())
 	}
-	// e.Use(middleware.Static("ui/build"))
-	e.Use(func(next echo.HandlerFunc) echo.HandlerFunc {
-		return func(c echo.Context) error {
-			if c.Request().Method != "GET" {
-				return next(c)
-			}
 
-			p := c.Request().URL.Path
+	e.Use(newBindataMiddleware(bindataConfig{
+		getter: ui.Asset,
+		jsConstants: map[string]interface{}{
+			"QTUMPORTAL_CONFIG": qtumPortalUIConfig{
+				AuthBaseURL: fmt.Sprintf("http://localhost:%d", opts.AuthPort),
+			},
+		},
+	}))
 
-			isIndex := p == "/"
-
-			if isIndex {
-				p += "index.html"
-			}
-
-			// strip off leading /
-			assetName := p[1:]
-			data, err := ui.Asset(assetName)
-
-			if isIndex {
-				config := qtumPortalUIConfig{
-					AuthBaseURL: fmt.Sprintf("http://localhost:%d", opts.AuthPort),
-				}
-
-				var buf bytes.Buffer
-
-				buf.Write([]byte(`<body>
-<script type="text/javascript">
-//<!CDATA[[
-QTUMPORTAL_CONFIG =
-`))
-
-				enc := json.NewEncoder(&buf)
-				err := enc.Encode(config)
-				if err != nil {
-					return errors.Wrap(err, "index.html JS inject")
-				}
-				buf.Write([]byte(`
-//]]>
-</script>`))
-
-				data = bytes.Replace(data, []byte("<body>"), buf.Bytes(), 1)
-			}
-
-			if err == nil {
-				ext := path.Ext(p)
-				contentType := mime.TypeByExtension(ext)
-				if contentType == "" {
-					contentType = http.DetectContentType(data)
-				}
-				return c.Blob(http.StatusOK, contentType, data)
-			}
-
-			return next(c)
-		}
-	})
 	e.Any("/events", s.subscribeToEvents)
 	e.GET("/authorizations", s.listAuthorizations)
 	e.GET("/authorizations/:id", s.getAuthorization)
