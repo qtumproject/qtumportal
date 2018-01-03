@@ -21,13 +21,17 @@ First, we'll need to make sure that qtumd is running.
 For testing/development purposes, let's start qtumd in regtest mode:
 
 ```
-qtumd -regtest -rpcuser=howard -rpcpassword=yeh
+docker run -it --rm \
+  --name myapp \
+  -v `pwd`:/dapp \
+  -p 3889:3889 \
+  hayeah/qtumportal
 ```
 
 Then use the env variable `QTUM_RPC` to specify the URL of your local qtumd RPC node:
 
 ```
-export QTUM_RPC=http://howard:yeh@localhost:13889
+export QTUM_RPC=http://qtum:test@localhost:3889
 ```
 
 Now we are ready to run the DApp. Clone an example DApp to your local machine:
