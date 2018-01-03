@@ -76,8 +76,14 @@ func (s *bindataMiddleware) Handle(c echo.Context) error {
 		p = strings.TrimPrefix(p, s.prefix)
 	}
 
+	// enforce "/" at the end of url
+	if p == "" {
+		c.Redirect(http.StatusPermanentRedirect, c.Request().URL.String()+"/")
+		return nil
+	}
+
 	// TODO support prefix paths
-	isIndex := p == "/" || p == ""
+	isIndex := p == "/"
 
 	if isIndex {
 		p = "/index.html"
