@@ -46,8 +46,10 @@ var rpcMethods = map[string]method{
 	// == Mining ==
 	// getblocktemplate ( TemplateRequest )
 	// getmininginfo
+	"getmininginfo": {true},
 	// getnetworkhashps ( nblocks height )
 	// getstakinginfo
+	"getstakinginfo": {true},
 	// getsubsidy [nTarget]
 	// prioritisetransaction <txid> <priority delta> <fee delta>
 	// submitblock "hexdata" ( "jsonparametersobject" )
@@ -59,8 +61,11 @@ var rpcMethods = map[string]method{
 	// getaddednodeinfo ( "node" )
 	// getconnectioncount
 	// getnettotals
+	"getnettotals": {true},
 	// getnetworkinfo
+	"getnetworkinfo": {true},
 	// getpeerinfo
+	"getpeerinfo": {true},
 	// listbanned
 	// ping
 	// setban "subnet" "add|remove" (bantime) (absolute)
@@ -71,8 +76,10 @@ var rpcMethods = map[string]method{
 	// decoderawtransaction "hexstring"
 	// decodescript "hexstring"
 	// fromhexaddress "hexaddress"
+	"fromhexaddress": {true},
 	// fundrawtransaction "hexstring" ( options )
 	// gethexaddress "address"
+	"gethexaddress": {true},
 	// getrawtransaction "txid" ( verbose )
 	// sendrawtransaction "hexstring" ( allowhighfees )
 	// signrawtransaction "hexstring" ( [{"txid":"id","vout":n,"scriptPubKey":"hex","redeemScript":"hex"},...] ["privatekey1",...] sighashtype )
@@ -129,18 +136,22 @@ var rpcMethods = map[string]method{
 	// listlockunspent
 	// listreceivedbyaccount ( minconf include_empty include_watchonly)
 	// listreceivedbyaddress ( minconf include_empty include_watchonly)
+	"listreceivedbyaddress": {false},
 	// listsinceblock ( "blockhash" target_confirmations include_watchonly)
 	"listsinceblock": {true},
 	// listtransactions ( "account" count skip include_watchonly)
 	"listtransactions": {true},
 	// listunspent ( minconf maxconf  ["addresses",...] [include_unsafe] )
+	"listunspent": {false},
 	// lockunspent unlock ([{"txid":"txid","vout":n},...])
 	// DEPRECATED move "fromaccount" "toaccount" amount ( minconf "comment" )
 	// removeprunedfunds "txid"
 	// reservebalance [<reserve> [amount]]
 	// DEPRECATED sendfrom "fromaccount" "toaddress" amount ( minconf "comment" "comment_to" )
 	// sendmany "fromaccount" {"address":amount,...} ( minconf "comment" ["address",...] )
+	"sendmany": {false},
 	// sendmanywithdupes "fromaccount" {"address":amount,...} ( minconf "comment" ["address",...] )
+	"sendmanywithdupes": {false},
 	// sendtoaddress "address" amount ( "comment" "comment_to" subtractfeefromamount )
 	"sendtoaddress": {false},
 	// sendtocontract "contractaddress" "data" (amount gaslimit gasprice senderaddress broadcast)
